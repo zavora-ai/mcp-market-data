@@ -1,0 +1,186 @@
+server_id = "mcp_market_data"
+display_name = "Market Data"
+version = "1.0.0"
+domain = "banking"
+sdk_version = "0.1.0"
+risk_level = "medium"
+writes_allowed = "gated"
+transports = ["stdio"]
+credentials = []
+governance_gates = []
+environments = ["development", "staging", "production"]
+
+[[tools]]
+name = "create_instrument"
+description = "Define an instrument across asset classes"
+risk_class = "internal_write"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "get_instrument"
+description = "Resolve an instrument by id or symbol"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "list_instruments"
+description = "List instruments by asset class"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "set_quote"
+description = "Set latest quote (evaluates price alerts)"
+risk_class = "internal_write"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "get_quote"
+description = "Get the latest quote"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "add_bar"
+description = "Add/replace a daily OHLC bar"
+risk_class = "internal_write"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "history"
+description = "Historical OHLC bars"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "analytics"
+description = "Return/volatility/min/max analytics"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "moving_average"
+description = "Simple moving average of closes"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "correlation"
+description = "Return correlation between two instruments"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "create_curve"
+description = "Create a yield/forward term-structure curve"
+risk_class = "internal_write"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "list_curves"
+description = "List curves by kind"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "interpolate_curve"
+description = "Interpolate a curve value at a tenor"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "fx_convert"
+description = "Convert between currencies (direct/inverse/triangulated)"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "create_benchmark"
+description = "Create an equal-weighted benchmark/index"
+risk_class = "internal_write"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "benchmark_level"
+description = "Compute a benchmark level from members"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "create_watchlist"
+description = "Create a watchlist of instruments"
+risk_class = "internal_write"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "watchlist_quotes"
+description = "Snapshot a watchlist with latest quotes"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "create_alert"
+description = "Create a price alert (above/below)"
+risk_class = "internal_write"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "list_alerts"
+description = "List price alerts by status"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "forecast"
+description = "Linear-drift forecast over the close series"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "publish_mark"
+description = "Publish an official mark (feeds valuation/P&L) — gated"
+risk_class = "external_write"
+requires_approval = true
+credential_bindings = []
+
+[[tools]]
+name = "latest_mark"
+description = "Get the latest official mark"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "list_marks"
+description = "List published official marks"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "audit_log"
+description = "Recent audit-trail entries"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []

@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 470" font-family="system-ui, -apple-system, sans-serif">
+  <defs>
+    <linearGradient id="hg" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:#1d4ed8"/><stop offset="100%" style="stop-color:#0891b2"/></linearGradient>
+    <marker id="a" markerWidth="8" markerHeight="8" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#64748b"/></marker>
+  </defs>
+  <rect width="780" height="470" fill="#f8fafc" rx="12"/>
+  <rect x="270" y="10" width="240" height="28" rx="8" fill="url(#hg)"/>
+  <text x="390" y="29" text-anchor="middle" fill="white" font-size="12" font-weight="bold">mcp-market-data — Market Data Platform</text>
+
+  <!-- agents -->
+  <rect x="40" y="48" width="700" height="42" rx="8" fill="#eff6ff" stroke="#1d4ed8" stroke-width="1.5"/>
+  <text x="390" y="62" text-anchor="middle" font-size="9" font-weight="bold" fill="#1e3a8a">Banking &amp; Energy Agents (clients of the market-data platform)</text>
+  <text x="390" y="79" text-anchor="middle" font-size="7" fill="#1d4ed8">Treasury Liquidity Analyst (banking) · Demand Forecast Agent · Renewable Dispatch Assistant (energy-utilities)</text>
+  <line x1="390" y1="90" x2="390" y2="106" stroke="#64748b" stroke-width="2" marker-end="url(#a)"/>
+
+  <!-- tools -->
+  <rect x="30" y="110" width="720" height="118" rx="10" fill="white" stroke="#0891b2" stroke-width="2"/>
+  <rect x="30" y="110" width="720" height="22" rx="10" fill="url(#hg)"/>
+  <text x="390" y="125" text-anchor="middle" fill="white" font-size="10" font-weight="bold">25 Tools — market-data platform (read-heavy)</text>
+  <g font-size="7" font-weight="bold" fill="#1e3a8a" text-anchor="middle">
+    <text x="100" y="148">Instr/Quotes (5)</text>
+    <text x="245" y="148">Analytics (5)</text>
+    <text x="385" y="148">Curves/FX (4)</text>
+    <text x="520" y="148">Bench/WL (4)</text>
+    <text x="675" y="148">Alert/Fcst (3)</text>
+  </g>
+  <g font-size="6.2" fill="#1d4ed8" text-anchor="middle">
+    <text x="100" y="163">instrument · quote</text>
+    <text x="100" y="173">resolve · list</text>
+    <text x="245" y="163">history · analytics</text>
+    <text x="245" y="173">moving_avg · corr</text>
+    <text x="385" y="163">curve · interpolate</text>
+    <text x="385" y="173">fx_convert</text>
+    <text x="520" y="163">benchmark_level</text>
+    <text x="520" y="173">watchlist_quotes</text>
+    <text x="675" y="163">alerts · forecast</text>
+    <text x="675" y="173">(linear drift)</text>
+  </g>
+  <g font-size="7" font-weight="bold" fill="#1e3a8a" text-anchor="middle">
+    <text x="300" y="196">Official Marks (4)</text>
+  </g>
+  <g font-size="6.2" fill="#1d4ed8" text-anchor="middle">
+    <text x="300" y="210">publish_mark *†  ·  latest_mark · list_marks · audit_log</text>
+  </g>
+  <text x="390" y="223" text-anchor="middle" font-size="6.4" fill="#64748b">* requires approval   † external write — feeds downstream valuation / P&amp;L / collateral</text>
+  <line x1="390" y1="228" x2="390" y2="244" stroke="#64748b" stroke-width="2" marker-end="url(#a)"/>
+
+  <!-- engines -->
+  <rect x="30" y="248" width="720" height="86" rx="10" fill="#fffbeb" stroke="#d97706" stroke-width="1.5"/>
+  <text x="390" y="263" text-anchor="middle" font-size="9" font-weight="bold" fill="#92400e">Analytics engines</text>
+  <g font-size="7" fill="#78350f" text-anchor="middle">
+    <text x="130" y="282" font-weight="bold">Returns / vol</text>
+    <text x="130" y="294">daily + annualized</text>
+    <text x="130" y="305">(×√252) · correlation</text>
+    <text x="320" y="282" font-weight="bold">Curve interp</text>
+    <text x="320" y="294">linear + flat</text>
+    <text x="320" y="305">extrapolation</text>
+    <text x="510" y="282" font-weight="bold">FX cross</text>
+    <text x="510" y="294">direct / inverse /</text>
+    <text x="510" y="305">USD triangulation</text>
+    <text x="675" y="282" font-weight="bold">Forecast</text>
+    <text x="675" y="294">linear drift +</text>
+    <text x="675" y="305">in-sample MAE</text>
+  </g>
+  <line x1="390" y1="334" x2="390" y2="350" stroke="#64748b" stroke-width="2" marker-end="url(#a)"/>
+
+  <!-- store -->
+  <rect x="30" y="354" width="720" height="64" rx="10" fill="#f1f5f9" stroke="#475569" stroke-width="1.5"/>
+  <text x="390" y="370" text-anchor="middle" font-size="9" font-weight="bold" fill="#334155">In-memory store (thread-safe) + mark/audit trail</text>
+  <g font-size="6.6" fill="#475569" text-anchor="middle">
+    <text x="390" y="387">instruments · quotes · bars · curves · benchmarks · watchlists · alerts · official_marks</text>
+    <text x="390" y="402" fill="#64748b">INS · CRV · BMK · WL · ALR · MRK</text>
+  </g>
+
+  <text x="390" y="440" text-anchor="middle" font-size="8" fill="#1d4ed8" font-weight="bold">adk-mcp-sdk · rmcp 1.7 · stdio transport · registry-ready manifest</text>
+  <text x="390" y="456" text-anchor="middle" font-size="7" fill="#94a3b8">Apache-2.0 · zavora-ai/mcp-market-data</text>
+</svg>
