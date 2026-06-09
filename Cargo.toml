@@ -1,9 +1,9 @@
 [package]
 name = "mcp-market-data"
-version = "1.0.0"
+version = "1.1.0"
 edition = "2024"
 authors = ["James Karanja <james.karanja@zavora.ai>"]
-description = "Market Data MCP Server — a market-data platform (instruments, real-time quotes and historical bars, analytics for returns/volatility/correlation/moving averages, yield & forward curves with interpolation, FX conversion, benchmarks/indices, watchlists, price alerts, and demand/price forecasting) with a published-mark audit trail"
+description = "Market Data MCP Server — a market-data platform (instruments, real-time quotes and historical bars, analytics for returns/volatility/correlation/moving averages, yield & forward curves with interpolation, FX conversion, benchmarks/indices, watchlists, price alerts, and demand/price forecasting) with an optional live backend (Yahoo Finance quotes/history + ECB/Frankfurter FX) and a published-mark audit trail"
 license = "Apache-2.0"
 repository = "https://github.com/zavora-ai/mcp-market-data"
 homepage = "https://enterprise.adk-rust.com"
@@ -23,5 +23,6 @@ anyhow = "1"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 async-trait = "0.1"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 
 [workspace]

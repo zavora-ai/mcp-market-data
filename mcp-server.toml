@@ -1,6 +1,6 @@
 server_id = "mcp_market_data"
 display_name = "Market Data"
-version = "1.0.0"
+version = "1.1.0"
 domain = "banking"
 sdk_version = "0.1.0"
 risk_level = "medium"
@@ -181,6 +181,13 @@ credential_bindings = []
 [[tools]]
 name = "audit_log"
 description = "Recent audit-trail entries"
+risk_class = "read_only"
+requires_approval = false
+credential_bindings = []
+
+[[tools]]
+name = "backend_info"
+description = "Report the active data backend (memory/live) and live-routed tools"
 risk_class = "read_only"
 requires_approval = false
 credential_bindings = []

@@ -133,43 +133,16 @@ impl MarketDataStore {
     pub fn analytics(&self, instrument_id: &str) -> Option<serde_json::Value> {
         let inst = self.get_instrument(instrument_id)?;
         let closes = self.closes(instrument_id);
-        if closes.len() < 2 {
-            return Some(serde_json::json!({"instrument_id": instrument_id, "symbol": inst.symbol, "samples": closes.len(), "note": "insufficient history"}));
-        }
-        let n = closes.len();
-        let last = *closes.last().unwrap();
-        let first = *closes.first().unwrap();
-        let min = closes.iter().cloned().fold(f64::INFINITY, f64::min);
-        let max = closes.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
-        let mean = closes.iter().sum::<f64>() / n as f64;
-        let period_return = (last / first - 1.0) * 100.0;
-        let rets = daily_returns(&closes);
-        let vol_daily = stddev(&rets);
-        let vol_annual = vol_daily * (252.0_f64).sqrt();
-        Some(serde_json::json!({
-            "instrument_id": instrument_id,
-            "symbol": inst.symbol,
-            "samples": n,
-            "last": last,
-            "min": round4(min),
-            "max": round4(max),
-            "mean": round4(mean),
-            "period_return_pct": round4(period_return),
-            "daily_vol_pct": round4(vol_daily * 100.0),
-            "annualized_vol_pct": round4(vol_annual * 100.0),
-        }))
+        Some(crate::analytics::summarize("instrument_id", instrument_id, &inst.symbol, &closes))
     }
 
     /// Simple moving average of closes over `window` days (latest value + series).
     pub fn moving_average(&self, instrument_id: &str, window: usize) -> Option<serde_json::Value> {
         let closes = self.closes(instrument_id);
-        if window == 0 || closes.len() < window { return Some(serde_json::json!({"instrument_id": instrument_id, "window": window, "note": "insufficient history"})); }
-        let mut sma = Vec::new();
-        for i in window..=closes.len() {
-            let w = &closes[i - window..i];
-            sma.push(round4(w.iter().sum::<f64>() / window as f64));
+        match crate::analytics::moving_average(&closes, window) {
+            Some(sma) => Some(serde_json::json!({"instrument_id": instrument_id, "window": window, "latest": sma.last().copied(), "series": sma})),
+            None => Some(serde_json::json!({"instrument_id": instrument_id, "window": window, "note": "insufficient history"})),
         }
-        Some(serde_json::json!({"instrument_id": instrument_id, "window": window, "latest": sma.last().copied(), "series": sma}))
     }
 
     /// Pearson correlation of daily returns between two instruments over the
@@ -179,10 +152,10 @@ impl MarketDataStore {
         let cb = self.closes(b);
         let n = ca.len().min(cb.len());
         if n < 3 { return Some(serde_json::json!({"a": a, "b": b, "note": "insufficient overlapping history"})); }
-        let ra = daily_returns(&ca[ca.len() - n..]);
-        let rb = daily_returns(&cb[cb.len() - n..]);
-        let corr = pearson(&ra, &rb);
-        Some(serde_json::json!({"a": a, "b": b, "samples": ra.len(), "correlation": corr.map(round4)}))
+        let ra = crate::analytics::daily_returns(&ca[ca.len() - n..]);
+        let rb = crate::analytics::daily_returns(&cb[cb.len() - n..]);
+        let corr = crate::analytics::pearson(&ra, &rb);
+        Some(serde_json::json!({"a": a, "b": b, "samples": ra.len(), "correlation": corr.map(crate::analytics::round4)}))
     }
 
     // ─── curves ────────────────────────────────────────────────────────────
@@ -342,24 +315,18 @@ impl MarketDataStore {
     /// and the in-sample drift. Powers the Demand Forecast & Dispatch agents.
     pub fn forecast(&self, instrument_id: &str, horizon: usize) -> Option<serde_json::Value> {
         let closes = self.closes(instrument_id);
-        if closes.len() < 3 { return Some(serde_json::json!({"instrument_id": instrument_id, "note": "insufficient history for forecast"})); }
-        let n = closes.len();
-        // Average period-over-period change (drift).
-        let drift: f64 = (1..n).map(|i| closes[i] - closes[i - 1]).sum::<f64>() / (n - 1) as f64;
-        let last = closes[n - 1];
-        let h = horizon.clamp(1, 60);
-        let projection: Vec<f64> = (1..=h).map(|k| round4(last + drift * k as f64)).collect();
-        // Simple in-sample fit error (mean abs of one-step drift residuals).
-        let mae: f64 = (1..n).map(|i| (closes[i] - (closes[i - 1] + drift)).abs()).sum::<f64>() / (n - 1) as f64;
-        Some(serde_json::json!({
-            "instrument_id": instrument_id,
-            "method": "linear_drift",
-            "last": last,
-            "drift_per_period": round4(drift),
-            "horizon": h,
-            "forecast": projection,
-            "in_sample_mae": round4(mae),
-        }))
+        match crate::analytics::forecast(&closes, horizon) {
+            Some((drift, last, projection, mae)) => Some(serde_json::json!({
+                "instrument_id": instrument_id,
+                "method": "linear_drift",
+                "last": last,
+                "drift_per_period": drift,
+                "horizon": projection.len(),
+                "forecast": projection,
+                "in_sample_mae": mae,
+            })),
+            None => Some(serde_json::json!({"instrument_id": instrument_id, "note": "insufficient history for forecast"})),
+        }
     }
 
     // ─── official marks (gated write) ──────────────────────────────────────
@@ -465,33 +432,7 @@ fn seed_walk(s: &MarketDataStore, id: &str, today: NaiveDate, start: f64, scale:
     }
 }
 
-// ─── math helpers ────────────────────────────────────────────────────────
+// ─── math helpers (shared with the live backend) ──────────────────────────
 
-fn round4(x: f64) -> f64 { (x * 10000.0).round() / 10000.0 }
-fn round6(x: f64) -> f64 { (x * 1_000_000.0).round() / 1_000_000.0 }
+use crate::analytics::{round4, round6};
 
-fn daily_returns(closes: &[f64]) -> Vec<f64> {
-    (1..closes.len()).filter_map(|i| if closes[i - 1] != 0.0 { Some(closes[i] / closes[i - 1] - 1.0) } else { None }).collect()
-}
-
-fn stddev(xs: &[f64]) -> f64 {
-    if xs.len() < 2 { return 0.0; }
-    let mean = xs.iter().sum::<f64>() / xs.len() as f64;
-    let var = xs.iter().map(|x| (x - mean).powi(2)).sum::<f64>() / (xs.len() - 1) as f64;
-    var.sqrt()
-}
-
-fn pearson(a: &[f64], b: &[f64]) -> Option<f64> {
-    let n = a.len().min(b.len());
-    if n < 2 { return None; }
-    let (a, b) = (&a[..n], &b[..n]);
-    let ma = a.iter().sum::<f64>() / n as f64;
-    let mb = b.iter().sum::<f64>() / n as f64;
-    let mut cov = 0.0; let mut va = 0.0; let mut vb = 0.0;
-    for i in 0..n {
-        let da = a[i] - ma; let db = b[i] - mb;
-        cov += da * db; va += da * da; vb += db * db;
-    }
-    if va == 0.0 || vb == 0.0 { return None; }
-    Some(cov / (va.sqrt() * vb.sqrt()))
-}

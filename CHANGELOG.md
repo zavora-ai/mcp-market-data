@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.1.0] - 2026-06-09
+
+### Added — optional live market data
+- **Live backend** selected by `MARKET_DATA_BACKEND=live` (default `memory`). In live mode, `get_quote`, `history`, and `analytics` pull **real data from Yahoo Finance**, and `fx_convert` uses **real ECB reference rates** via Frankfurter — no API key required.
+- Live mode returns real numbers or an **honest error**; it never falls back to sample data. Pass a symbol (e.g. `AAPL`, `^GSPC`) as `instrument_id`.
+- New `backend_info` tool reports the active backend and live-routed sources (26 tools total).
+- Shared `analytics` module so live and memory paths compute identical returns/volatility/forecast math.
+- `memory` remains the default and the deterministic offline/test backend.
+
+### Notes
+- Free public sources are delayed/best-effort and unofficial; point the live client at a licensed vendor feed for production.
+- 18 tests (12 integration + 4 manifest + 2 live unit); live network path verified end-to-end over MCP stdio.
+
 ## [1.0.0] - 2026-06-09
 
 Initial release — a broad market-data platform for banking & energy agents.

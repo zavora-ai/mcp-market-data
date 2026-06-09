@@ -15,7 +15,7 @@ fn manifest_parses_and_validates() {
     assert!(m.validate().is_empty(), "validation errors: {:?}", m.validate());
     assert_eq!(m.server_id, "mcp_market_data");
     assert_eq!(m.domain, "banking");
-    assert_eq!(m.tools.len(), 25, "expected 25 declared tools");
+    assert_eq!(m.tools.len(), 26, "expected 26 declared tools");
 }
 
 #[test]
@@ -31,7 +31,7 @@ fn publish_mark_is_gated_external() {
 fn analytics_reads_are_read_only() {
     use adk_mcp_sdk::risk::RiskClass;
     let m = manifest();
-    for name in ["get_quote", "history", "analytics", "moving_average", "correlation", "interpolate_curve", "fx_convert", "benchmark_level", "watchlist_quotes", "forecast", "latest_mark", "audit_log"] {
+    for name in ["get_quote", "history", "analytics", "moving_average", "correlation", "interpolate_curve", "fx_convert", "benchmark_level", "watchlist_quotes", "forecast", "latest_mark", "audit_log", "backend_info"] {
         let t = m.tools.iter().find(|t| t.name == name).unwrap();
         assert_eq!(t.risk_class, RiskClass::ReadOnly, "{name} should be read_only");
     }

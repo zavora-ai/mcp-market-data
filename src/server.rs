@@ -83,11 +83,13 @@ pub struct ListMarksInput { pub instrument_id: Option<String>, #[serde(default =
 fn dlimit() -> usize { 50 }
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
 pub struct AuditLogInput { #[serde(default = "dlimit")] pub limit: usize }
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub struct BackendInfoInput {}
 
 // ─── server ───────────────────────────────────────────────────────────────
 
 #[derive(Clone)]
-pub struct MarketDataServer { pub store: Arc<MarketDataStore> }
+pub struct MarketDataServer { pub store: Arc<MarketDataStore>, pub backend: crate::live::Backend, pub live: Arc<crate::live::LiveClient> }
 
 #[tool_router(server_handler)]
 impl MarketDataServer {
@@ -117,8 +119,19 @@ impl MarketDataServer {
             Ok(q) => serde_json::to_string_pretty(&q).unwrap(), Err(e) => format!("Error: {e}") }
     }
 
-    #[tool(description = "Get the latest quote for an instrument.")]
-    fn get_quote(&self, Parameters(i): Parameters<InstrumentIdInput>) -> String {
+    #[tool(description = "Get the latest quote for an instrument. In live mode, fetches a real price from Yahoo Finance by symbol.")]
+    async fn get_quote(&self, Parameters(i): Parameters<InstrumentIdInput>) -> String {
+        if self.backend == crate::live::Backend::Live {
+            // Resolve a symbol: accept a stored id, else treat the input as a symbol.
+            let symbol = self.store.resolve(&i.instrument_id).map(|x| x.symbol).unwrap_or_else(|| i.instrument_id.clone());
+            return match self.live.quote(&symbol).await {
+                Ok((price, date)) => serde_json::to_string_pretty(&serde_json::json!({
+                    "symbol": symbol, "last": price, "bid": price, "ask": price,
+                    "as_of": date.to_string(), "source": "yahoo-finance", "backend": "live"
+                })).unwrap(),
+                Err(e) => format!("Error (live): {e}"),
+            };
+        }
         match self.store.get_quote(&i.instrument_id) {
             Some(q) => serde_json::to_string_pretty(&q).unwrap(), None => format!("No quote for: {}", i.instrument_id) }
     }
@@ -130,15 +143,29 @@ impl MarketDataServer {
             Ok(b) => serde_json::to_string_pretty(&b).unwrap(), Err(e) => format!("Error: {e}") }
     }
 
-    #[tool(description = "Historical OHLC bars for an instrument (optionally the most recent `limit`).")]
-    fn history(&self, Parameters(i): Parameters<HistoryInput>) -> String {
+    #[tool(description = "Historical OHLC bars for an instrument (optionally the most recent `limit`). In live mode, fetches real daily history from Yahoo Finance by symbol.")]
+    async fn history(&self, Parameters(i): Parameters<HistoryInput>) -> String {
+        if self.backend == crate::live::Backend::Live {
+            let symbol = self.store.resolve(&i.instrument_id).map(|x| x.symbol).unwrap_or_else(|| i.instrument_id.clone());
+            return match self.live.history(&symbol, i.limit).await {
+                Ok(bars) => serde_json::to_string_pretty(&serde_json::json!({"count": bars.len(), "bars": bars, "source": "yahoo-finance", "backend": "live"})).unwrap(),
+                Err(e) => format!("Error (live): {e}"),
+            };
+        }
         let v = self.store.history(&i.instrument_id, i.limit);
         serde_json::to_string_pretty(&serde_json::json!({"count": v.len(), "bars": v})).unwrap()
     }
 
     // analytics
-    #[tool(description = "Price analytics for an instrument: last/min/max/mean, period return, daily and annualized volatility.")]
-    fn analytics(&self, Parameters(i): Parameters<InstrumentIdInput>) -> String {
+    #[tool(description = "Price analytics for an instrument: last/min/max/mean, period return, daily and annualized volatility. In live mode, computed from real Yahoo Finance history.")]
+    async fn analytics(&self, Parameters(i): Parameters<InstrumentIdInput>) -> String {
+        if self.backend == crate::live::Backend::Live {
+            let symbol = self.store.resolve(&i.instrument_id).map(|x| x.symbol).unwrap_or_else(|| i.instrument_id.clone());
+            return match self.live.analytics(&symbol).await {
+                Ok(v) => serde_json::to_string_pretty(&v).unwrap(),
+                Err(e) => format!("Error (live): {e}"),
+            };
+        }
         match self.store.analytics(&i.instrument_id) {
             Some(v) => serde_json::to_string_pretty(&v).unwrap(), None => format!("Instrument not found: {}", i.instrument_id) }
     }
@@ -176,8 +203,14 @@ impl MarketDataServer {
     }
 
     // FX
-    #[tool(description = "Convert an amount between currencies using FX quotes (direct, inverse, or triangulated via USD).")]
-    fn fx_convert(&self, Parameters(i): Parameters<FxConvertInput>) -> String {
+    #[tool(description = "Convert an amount between currencies. In live mode uses real ECB reference rates (Frankfurter); in memory mode uses stored FX quotes (direct/inverse/USD-triangulated).")]
+    async fn fx_convert(&self, Parameters(i): Parameters<FxConvertInput>) -> String {
+        if self.backend == crate::live::Backend::Live {
+            return match self.live.fx_convert(i.amount, &i.from, &i.to).await {
+                Ok(v) => serde_json::to_string_pretty(&v).unwrap(),
+                Err(e) => format!("Error (live): {e}"),
+            };
+        }
         match self.store.fx_convert(i.amount, &i.from, &i.to) {
             Ok(v) => serde_json::to_string_pretty(&v).unwrap(), Err(e) => format!("Error: {e}") }
     }
@@ -251,6 +284,17 @@ impl MarketDataServer {
     fn audit_log(&self, Parameters(i): Parameters<AuditLogInput>) -> String {
         let v = self.store.audit_log(i.limit);
         serde_json::to_string_pretty(&serde_json::json!({"count": v.len(), "entries": v})).unwrap()
+    }
+
+    #[tool(description = "Report the active data backend (memory or live) and which tools route to live sources. In live mode, quotes/history/analytics use Yahoo Finance and fx_convert uses ECB/Frankfurter.")]
+    fn backend_info(&self, Parameters(_): Parameters<BackendInfoInput>) -> String {
+        let live = self.backend == crate::live::Backend::Live;
+        serde_json::to_string_pretty(&serde_json::json!({
+            "backend": self.backend.label(),
+            "live_routed_tools": ["get_quote", "history", "analytics", "fx_convert"],
+            "sources": if live { serde_json::json!({"prices": "yahoo-finance", "fx": "frankfurter-ecb"}) } else { serde_json::json!({"prices": "seeded-memory", "fx": "seeded-memory"}) },
+            "note": if live { "Live data is delayed/EOD and best-effort; errors are returned honestly, never replaced with sample data." } else { "Default offline backend with deterministic seeded data. Set MARKET_DATA_BACKEND=live for real data." },
+        })).unwrap()
     }
 }
 
