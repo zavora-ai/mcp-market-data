@@ -91,7 +91,7 @@ pub struct BackendInfoInput {}
 #[derive(Clone)]
 pub struct MarketDataServer { pub store: Arc<MarketDataStore>, pub backend: crate::live::Backend, pub live: Arc<crate::live::LiveClient> }
 
-#[tool_router(server_handler)]
+#[tool_router]
 impl MarketDataServer {
     // instruments
     #[tool(description = "Define an instrument (equity/bond/fx/commodity/rate/energy/index).")]
@@ -303,4 +303,11 @@ impl HealthCheck for MarketDataServer {
     async fn check_health(&self) -> HealthStatus {
         HealthStatus { healthy: true, message: Some("operational".into()), latency_ms: Some(1) }
     }
+}
+
+adk_mcp_sdk::mcp_2026_server! {
+    server: MarketDataServer,
+    task_tools: ["fx_convert"],
+    approval_tools: ["publish_mark"],
+    cache_ttl_ms: 60_000,
 }

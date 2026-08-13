@@ -1,193 +1,193 @@
 server_id = "mcp_market_data"
 display_name = "Market Data"
-version = "1.1.0"
+version = "1.2.0"
 domain = "banking"
-sdk_version = "0.1.0"
-risk_level = "medium"
+sdk_version = "0.2.0"
+risk_level = "high"
 writes_allowed = "gated"
 transports = ["stdio"]
 credentials = []
-governance_gates = []
+governance_gates = ["mrtr_approval"]
 environments = ["development", "staging", "production"]
 
 [[tools]]
 name = "create_instrument"
-description = "Define an instrument across asset classes"
+description = "Define an instrument (equity/bond/fx/commodity/rate/energy/index)."
 risk_class = "internal_write"
 requires_approval = false
 credential_bindings = []
 
 [[tools]]
 name = "get_instrument"
-description = "Resolve an instrument by id or symbol"
+description = "Resolve an instrument by id or symbol."
 risk_class = "read_only"
 requires_approval = false
 credential_bindings = []
 
 [[tools]]
 name = "list_instruments"
-description = "List instruments by asset class"
+description = "List instruments, optionally by asset class."
 risk_class = "read_only"
 requires_approval = false
 credential_bindings = []
 
 [[tools]]
 name = "set_quote"
-description = "Set latest quote (evaluates price alerts)"
+description = "Set the latest quote (bid/ask/last) for an instrument; evaluates armed price alerts."
 risk_class = "internal_write"
 requires_approval = false
 credential_bindings = []
 
 [[tools]]
 name = "get_quote"
-description = "Get the latest quote"
+description = "Get the latest quote for an instrument. In live mode, fetches a real price from Yahoo Finance by symbol."
 risk_class = "read_only"
 requires_approval = false
 credential_bindings = []
 
 [[tools]]
 name = "add_bar"
-description = "Add/replace a daily OHLC bar"
+description = "Add/replace a daily OHLC bar for an instrument."
 risk_class = "internal_write"
 requires_approval = false
 credential_bindings = []
 
 [[tools]]
 name = "history"
-description = "Historical OHLC bars"
+description = "Historical OHLC bars for an instrument (optionally the most recent `limit`). In live mode, fetches real daily history from Yahoo Finance by symbol."
 risk_class = "read_only"
 requires_approval = false
 credential_bindings = []
 
 [[tools]]
 name = "analytics"
-description = "Return/volatility/min/max analytics"
+description = "Price analytics for an instrument: last/min/max/mean, period return, daily and annualized volatility. In live mode, computed from real Yahoo Finance history."
 risk_class = "read_only"
 requires_approval = false
 credential_bindings = []
 
 [[tools]]
 name = "moving_average"
-description = "Simple moving average of closes"
+description = "Simple moving average of closes over a window."
 risk_class = "read_only"
 requires_approval = false
 credential_bindings = []
 
 [[tools]]
 name = "correlation"
-description = "Return correlation between two instruments"
+description = "Pearson correlation of daily returns between two instruments (diversification/hedge analysis)."
 risk_class = "read_only"
 requires_approval = false
 credential_bindings = []
 
 [[tools]]
 name = "create_curve"
-description = "Create a yield/forward term-structure curve"
+description = "Create a term-structure curve (yield or forward) from tenor/value points."
 risk_class = "internal_write"
 requires_approval = false
 credential_bindings = []
 
 [[tools]]
 name = "list_curves"
-description = "List curves by kind"
+description = "List curves, optionally by kind (yield/forward)."
 risk_class = "read_only"
 requires_approval = false
 credential_bindings = []
 
 [[tools]]
 name = "interpolate_curve"
-description = "Interpolate a curve value at a tenor"
+description = "Linearly interpolate a curve's value at a tenor (flat beyond the ends)."
 risk_class = "read_only"
 requires_approval = false
 credential_bindings = []
 
 [[tools]]
 name = "fx_convert"
-description = "Convert between currencies (direct/inverse/triangulated)"
+description = "Convert an amount between currencies. In live mode uses real ECB reference rates (Frankfurter); in memory mode uses stored FX quotes (direct/inverse/USD-triangulated)."
 risk_class = "read_only"
 requires_approval = false
 credential_bindings = []
 
 [[tools]]
 name = "create_benchmark"
-description = "Create an equal-weighted benchmark/index"
+description = "Create an equal-weighted benchmark/index from member instruments."
 risk_class = "internal_write"
 requires_approval = false
 credential_bindings = []
 
 [[tools]]
 name = "benchmark_level"
-description = "Compute a benchmark level from members"
+description = "Compute an equal-weighted benchmark level from member last prices, with contributions."
 risk_class = "read_only"
 requires_approval = false
 credential_bindings = []
 
 [[tools]]
 name = "create_watchlist"
-description = "Create a watchlist of instruments"
+description = "Create a watchlist of instruments."
 risk_class = "internal_write"
 requires_approval = false
 credential_bindings = []
 
 [[tools]]
 name = "watchlist_quotes"
-description = "Snapshot a watchlist with latest quotes"
+description = "Snapshot a watchlist with each instrument's latest quote."
 risk_class = "read_only"
 requires_approval = false
 credential_bindings = []
 
 [[tools]]
 name = "create_alert"
-description = "Create a price alert (above/below)"
+description = "Create a price alert (above/below threshold). Evaluated whenever a new quote arrives."
 risk_class = "internal_write"
 requires_approval = false
 credential_bindings = []
 
 [[tools]]
 name = "list_alerts"
-description = "List price alerts by status"
+description = "List price alerts, optionally by status (armed/triggered/disabled)."
 risk_class = "read_only"
 requires_approval = false
 credential_bindings = []
 
 [[tools]]
 name = "forecast"
-description = "Linear-drift forecast over the close series"
+description = "Forecast future values via linear-drift on the close series. Powers the Demand Forecast & Renewable Dispatch agents."
 risk_class = "read_only"
 requires_approval = false
 credential_bindings = []
 
 [[tools]]
 name = "publish_mark"
-description = "Publish an official mark (feeds valuation/P&L) — gated"
+description = "Publish an OFFICIAL mark/closing price for an instrument. This feeds downstream valuation, P&L and collateral — external write, gated."
 risk_class = "external_write"
 requires_approval = true
 credential_bindings = []
 
 [[tools]]
 name = "latest_mark"
-description = "Get the latest official mark"
+description = "Get the latest official mark for an instrument."
 risk_class = "read_only"
 requires_approval = false
 credential_bindings = []
 
 [[tools]]
 name = "list_marks"
-description = "List published official marks"
+description = "List published official marks, optionally for one instrument."
 risk_class = "read_only"
 requires_approval = false
 credential_bindings = []
 
 [[tools]]
 name = "audit_log"
-description = "Recent audit-trail entries"
+description = "Recent audit-trail entries (most recent first)."
 risk_class = "read_only"
 requires_approval = false
 credential_bindings = []
 
 [[tools]]
 name = "backend_info"
-description = "Report the active data backend (memory/live) and live-routed tools"
+description = "Report the active data backend (memory or live) and which tools route to live sources. In live mode, quotes/history/analytics use Yahoo Finance and fx_convert uses ECB/Frankfurter."
 risk_class = "read_only"
 requires_approval = false
 credential_bindings = []
