@@ -1,6 +1,6 @@
 server_id = "mcp_market_data"
 display_name = "Market Data"
-version = "1.1.0"
+version = "1.2.0"
 domain = "banking"
 sdk_version = "0.2.0"
 risk_level = "high"

@@ -124,7 +124,7 @@ cd mcp-market-data && cargo build --release
 ```toml
 server_id = "mcp_market_data"
 display_name = "Market Data"
-version = "1.1.0"
+version = "1.2.0"
 domain = "banking"
 risk_level = "medium"
 writes_allowed = "gated"
